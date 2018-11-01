@@ -8,6 +8,17 @@ var svg = d3.select("#map").append("svg")
     .attr("width", width)
     .attr("height", height);
 
+var centerScale = d3.scalePoint().padding(1).range([0, width]);
+var forceStrength = 0.05;
+
+var parties = _.uniq(elec_results.map(function (d) {
+    return d.party;
+}))
+party_dims = {}
+for (var i =0 ; i<parties.length;i++) {
+    party_dims[parties[i]] = {x: 10, y: i*50}
+}
+console.log(party_dims)
 drawMap(map_obj)
 
 function circlePath(x, y, radius) {
@@ -46,10 +57,13 @@ function drawMap(map) {
 
 
     var inward = feature.features.map(function (d, i) {
+        party_dim = party_dims[filter_obj(elec_results, 'constituency', d.properties.AC_NAME)[0].party]
+        // x = (1 + (i % cols)) * (width / cols)
+        // y = (Math.floor(i / cols) + 1) * (height / rows)
+        x = party_dim.x*i
+        y = party_dim.y
         return flubber.combine(flubber.splitPathString(geoPath(d)),
-            circlePath((1 + (i % cols)) * (width / cols),
-                (Math.floor(i / cols) + 1) * (height / rows),
-                15),
+            circlePath(x, y, 15),
             { single: true });
     });
 
