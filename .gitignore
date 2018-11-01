@@ -1,0 +1,6 @@
+.vscode/
+.ipynb_checkpoints/
+node_modules/
+notebooks/
+static/
+index_sub.html
