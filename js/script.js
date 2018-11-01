@@ -15,8 +15,8 @@ var parties = _.uniq(elec_results.map(function (d) {
     return d.party;
 }))
 party_dims = {}
-for (var i =0 ; i<parties.length;i++) {
-    party_dims[parties[i]] = {x: 10, y: i*50}
+for (var i = 0; i < parties.length; i++) {
+    party_dims[parties[i]] = { x: 10, y: (i) * 50 }
 }
 console.log(party_dims)
 drawMap(map_obj)
@@ -55,22 +55,24 @@ function drawMap(map) {
             return geoPath(d);
         });
 
-
-    var inward = feature.features.map(function (d, i) {
-        party_dim = party_dims[filter_obj(elec_results, 'constituency', d.properties.AC_NAME)[0].party]
+    function get_coords(prop_key, i) {
+        party_dim = party_dims[filter_obj(elec_results, 'constituency', prop_key)[0].party]
         // x = (1 + (i % cols)) * (width / cols)
         // y = (Math.floor(i / cols) + 1) * (height / rows)
-        x = party_dim.x*i
+        x = party_dim.x * (i)
         y = party_dim.y
+    }
+
+    var inward = feature.features.map(function (d, i) {
+        get_coords(d.properties.AC_NAME, i)
         return flubber.combine(flubber.splitPathString(geoPath(d)),
             circlePath(x, y, 15),
             { single: true });
     });
 
     var outward = feature.features.map(function (d, i) {
-        return flubber.separate(circlePath((1 + (i % cols)) * (width / cols),
-            (Math.floor(i / cols) + 1) * (height / rows),
-            15),
+        get_coords(d.properties.AC_NAME, i)
+        return flubber.separate(circlePath(x, y, 15),
             flubber.splitPathString(geoPath(d)),
             { single: true });
     });
