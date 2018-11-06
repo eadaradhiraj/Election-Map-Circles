@@ -31,17 +31,14 @@ function draw_const_map(config) {
         .attr("width", width)
         .attr("height", height);
 
+    var parties = d3.set(elec_results, function(d) {return d.party}).values();
 
-    var parties = _.uniq(elec_results.map(function (d) {
-        return d.party;
-    }))
-
-    var feature = topojson.feature(map_obj, _.values(map_obj.objects)[0]);
+    var feature = topojson.feature(map_obj, d3.values(map_obj.objects)[0]);
     var const_dims = {}
     var j = 0
-    _.forEach(parties, function (party) {
+    parties.forEach(function (party) {
         var i = 0
-        _.each(feature.features, function (d) {
+        feature["features"].forEach(function (d) {
             ac_name = d.properties.AC_NAME
             if (filter_obj(elec_results, 'constituency', ac_name)[0].party === party) {
                 curr_x = (i * circle_padding) + padding_x
