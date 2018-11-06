@@ -13,8 +13,8 @@ function filter_obj(obj_arr, key, value) {
 
 function draw_const_map(config) {
 
-    var width = config.width || 600
-    var height = config.height || 360
+    var width = config.width || 900
+    var height = config.height || 540
     var placeholder = config.placeholder
 
 
@@ -23,9 +23,9 @@ function draw_const_map(config) {
 
     var map_obj = config.map_obj
 
-    var circle_padding = ((width/100)*(height/100))/1.5
+    var circle_padding = ((width / 100) * (height / 100)) / 1.5
 
-    var const_radius = ((width/100)*(height/100))/4
+    var const_radius = ((width / 100) * (height / 100)) / 4
 
     var svg = d3.select(placeholder).append("svg")
         .attr("width", width)
@@ -45,7 +45,7 @@ function draw_const_map(config) {
             ac_name = d.properties.AC_NAME
             if (filter_obj(elec_results, 'constituency', ac_name)[0].party === party) {
                 curr_x = (i * circle_padding) + padding_x
-                if (curr_x >= (width-15)) {
+                if (curr_x >= (width - 15)) {
                     i = 0
                     curr_x = (i * circle_padding) + padding_x
                     j += 1
@@ -64,6 +64,21 @@ function draw_const_map(config) {
         .fitSize([width, height], feature);
     var geoPath = d3.geoPath().projection(proj);
 
+    var tooltip = d3.select("body").append("div")
+        .attr("class", "tooltip")
+        .style("opacity", 0)
+        .style("position", "absolute")
+        .style("text-align", "center")
+        .style("width", "50px")
+        .style("height", "50px")
+        .style("padding", "2px")
+        .style("font-size", "12px")
+        .style("font-style", "sans-serif")
+        .style("background", "yellow")
+        .style("border", "0px")
+        .style("border-radius", "8px")
+        .style("pointer-events", "none")
+
     var path = svg.selectAll("path.const")
         .data(feature.features)
         .enter().append("path")
@@ -76,7 +91,21 @@ function draw_const_map(config) {
         })
         .attr("d", function (d) {
             return geoPath(d);
+        })
+        .on("mouseover", function (d) {
+            tooltip.transition()
+                .duration(200)
+                .style("opacity", .9);
+            tooltip.html(filter_obj(elec_results, 'constituency', d.properties.AC_NAME)[0].party + "<br/>" + d.properties.AC_NAME)
+                .style("left", (d3.event.pageX) + "px")
+                .style("top", (d3.event.pageY) + "px");
+        })
+        .on("mouseout", function (d) {
+            tooltip.transition()
+                .duration(500)
+                .style("opacity", 0);
         });
+
 
     var inward = feature.features.map(function (d) {
         const_dim = const_dims[d.properties.AC_NAME]
@@ -111,7 +140,7 @@ function draw_const_map(config) {
 
 }
 
-var config = {} 
+var config = {}
 config.map_obj = map_obj
 config.placeholder = '#map'
 
