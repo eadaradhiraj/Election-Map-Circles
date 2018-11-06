@@ -1,26 +1,3 @@
-var width = 960,
-    height = 500;
-
-var rows = 10,
-    cols = 20;
-
-var svg = d3.select("#map").append("svg")
-    .attr("width", width)
-    .attr("height", height);
-
-var centerScale = d3.scalePoint().padding(1).range([0, width]);
-var forceStrength = 0.05;
-
-var parties = _.uniq(elec_results.map(function (d) {
-    return d.party;
-}))
-party_dims = {}
-for (var i = 0; i < parties.length; i++) {
-    party_dims[parties[i]] = { x: 10, y: (i) * 50 }
-}
-console.log(party_dims)
-drawMap(map_obj)
-
 function circlePath(x, y, radius) {
     var l = `${x - radius},${y}`,
         r = `${x + radius},${y}`,
@@ -34,8 +11,54 @@ function filter_obj(obj_arr, key, value) {
     });
 }
 
-function drawMap(map) {
-    var feature = topojson.feature(map, map.objects.RAJ_AC);
+function draw_const_map(config) {
+
+    var width = config.width || 600
+    var height = config.height || 360
+    var placeholder = config.placeholder
+
+
+    var padding_x = config.padding_x || 11
+    var padding_y = config.padding_y || 12
+
+    var map_obj = config.map_obj
+
+    var circle_padding = ((width/100)*(height/100))/1.5
+
+    var const_radius = ((width/100)*(height/100))/4
+
+    var svg = d3.select(placeholder).append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+
+    var parties = _.uniq(elec_results.map(function (d) {
+        return d.party;
+    }))
+
+    var feature = topojson.feature(map_obj, _.values(map_obj.objects)[0]);
+    var const_dims = {}
+    var j = 0
+    _.forEach(parties, function (party) {
+        var i = 0
+        _.each(feature.features, function (d) {
+            ac_name = d.properties.AC_NAME
+            if (filter_obj(elec_results, 'constituency', ac_name)[0].party === party) {
+                curr_x = (i * circle_padding) + padding_x
+                if (curr_x >= (width-15)) {
+                    i = 0
+                    curr_x = (i * circle_padding) + padding_x
+                    j += 1
+                }
+                curr_y = (j * circle_padding) + padding_y
+                const_dims[ac_name] = { x: curr_x, y: curr_y }
+                i++
+            }
+        })
+        j++
+    })
+
+
 
     var proj = d3.geoEquirectangular()
         .fitSize([width, height], feature);
@@ -55,24 +78,16 @@ function drawMap(map) {
             return geoPath(d);
         });
 
-    function get_coords(prop_key, i) {
-        party_dim = party_dims[filter_obj(elec_results, 'constituency', prop_key)[0].party]
-        // x = (1 + (i % cols)) * (width / cols)
-        // y = (Math.floor(i / cols) + 1) * (height / rows)
-        x = party_dim.x * (i)
-        y = party_dim.y
-    }
-
-    var inward = feature.features.map(function (d, i) {
-        get_coords(d.properties.AC_NAME, i)
+    var inward = feature.features.map(function (d) {
+        const_dim = const_dims[d.properties.AC_NAME]
         return flubber.combine(flubber.splitPathString(geoPath(d)),
-            circlePath(x, y, 15),
+            circlePath(const_dim.x, const_dim.y, const_radius),
             { single: true });
     });
 
-    var outward = feature.features.map(function (d, i) {
-        get_coords(d.properties.AC_NAME, i)
-        return flubber.separate(circlePath(x, y, 15),
+    var outward = feature.features.map(function (d) {
+        const_dim = const_dims[d.properties.AC_NAME]
+        return flubber.separate(circlePath(const_dim.x, const_dim.y, const_radius),
             flubber.splitPathString(geoPath(d)),
             { single: true });
     });
@@ -80,7 +95,7 @@ function drawMap(map) {
 
     d3.select("#show_circles").on("click", function () {
         path
-            .transition().delay(500).duration(3000)
+            .transition().delay(500).duration(5000)
             .attrTween("d", function (d, i) {
                 return inward[i];
             })
@@ -88,10 +103,16 @@ function drawMap(map) {
     })
     d3.select("#show_map").on("click", function () {
         path
-            .transition().delay(500).duration(3000)
+            .transition().delay(500).duration(5000)
             .attrTween("d", function (d, i) {
                 return outward[i];
             })
     })
 
 }
+
+var config = {} 
+config.map_obj = map_obj
+config.placeholder = '#map'
+
+draw_const_map(config)
