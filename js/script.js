@@ -109,29 +109,26 @@ function draw_const_map(config) {
                 .style("opacity", 0);
         });
 
-
-    var inward = feature.features.map(function (d) {
+    var inward = {}
+    var outward = {}
+    feature.features.forEach(function (d) {
         const_dim = const_dims[d.properties.AC_NAME]
-        return flubber.combine(flubber.splitPathString(geoPath(d)),
+        inward[d.properties.AC_NO] = flubber.combine(flubber.splitPathString(geoPath(d)),
             circlePath(const_dim.x, const_dim.y, const_radius), {
                 single: true
             });
-    });
-
-    var outward = feature.features.map(function (d) {
-        const_dim = const_dims[d.properties.AC_NAME]
-        return flubber.separate(circlePath(const_dim.x, const_dim.y, const_radius),
+        outward[d.properties.AC_NO] = flubber.separate(circlePath(const_dim.x, const_dim.y, const_radius),
             flubber.splitPathString(geoPath(d)), {
                 single: true
             });
-    });
+    })
 
 
     d3.select("#show_circles").on("click", function () {
         path
             .transition().delay(500).duration(5000)
-            .attrTween("d", function (d, i) {
-                return inward[i];
+            .attrTween("d", function (d) {
+                return inward[d.properties.AC_NO];
             })
 
     })
@@ -139,7 +136,7 @@ function draw_const_map(config) {
         path
             .transition().delay(500).duration(5000)
             .attrTween("d", function (d, i) {
-                return outward[i];
+                return outward[d.properties.AC_NO];
             })
     })
 
