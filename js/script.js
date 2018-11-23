@@ -19,7 +19,7 @@ function draw_const_map(config) {
 
 
     var padding_x = config.padding_x || 11
-    var padding_y = config.padding_y || 12
+    var padding_y = config.padding_y || 13
 
     var map_obj = config.map_obj
 
@@ -31,19 +31,21 @@ function draw_const_map(config) {
         .attr("width", width)
         .attr("height", height);
 
-    var parties = d3.set(elec_results, function (d) {
-        return d.party
-    }).values();
+    var counts = {}
+    elec_results.forEach(function (d) {
+        counts[d.party] = 1 + (counts[d.party] || 0)
+    })
+    var parties = Object.keys(counts).sort(function(a,b){return counts[b]-counts[a]})
+
 
     var feature = topojson.feature(map_obj, d3.values(map_obj.objects)[0]);
     var const_dims = {}
     var j = 0
+    var i = 0
     parties.forEach(function (party) {
-        var i = 0
         feature["features"].forEach(function (d) {
             ac_name = d.properties.AC_NAME
             if (filter_obj(elec_results, 'constituency', ac_name)[0].party === party) {
-                // console.log(ac_name)
                 curr_x = (i * circle_padding) + padding_x
                 if (curr_x >= (width - 15)) {
                     i = 0
@@ -58,7 +60,6 @@ function draw_const_map(config) {
                 i++
             }
         })
-        j++
     })
 
 
@@ -109,29 +110,26 @@ function draw_const_map(config) {
                 .style("opacity", 0);
         });
 
-
-    var inward = feature.features.map(function (d) {
+    var inward = {}
+    var outward = {}
+    feature.features.forEach(function (d) {
         const_dim = const_dims[d.properties.AC_NAME]
-        return flubber.combine(flubber.splitPathString(geoPath(d)),
+        inward[d.properties.AC_NO] = flubber.combine(flubber.splitPathString(geoPath(d)),
             circlePath(const_dim.x, const_dim.y, const_radius), {
                 single: true
             });
-    });
-
-    var outward = feature.features.map(function (d) {
-        const_dim = const_dims[d.properties.AC_NAME]
-        return flubber.separate(circlePath(const_dim.x, const_dim.y, const_radius),
+        outward[d.properties.AC_NO] = flubber.separate(circlePath(const_dim.x, const_dim.y, const_radius),
             flubber.splitPathString(geoPath(d)), {
                 single: true
             });
-    });
+    })
 
 
     d3.select("#show_circles").on("click", function () {
         path
             .transition().delay(500).duration(5000)
-            .attrTween("d", function (d, i) {
-                return inward[i];
+            .attrTween("d", function (d) {
+                return inward[d.properties.AC_NO];
             })
 
     })
@@ -139,7 +137,7 @@ function draw_const_map(config) {
         path
             .transition().delay(500).duration(5000)
             .attrTween("d", function (d, i) {
-                return outward[i];
+                return outward[d.properties.AC_NO];
             })
     })
 
