@@ -43,6 +43,7 @@ function draw_const_map(config) {
         feature["features"].forEach(function (d) {
             ac_name = d.properties.AC_NAME
             if (filter_obj(elec_results, 'constituency', ac_name)[0].party === party) {
+                // console.log(ac_name)
                 curr_x = (i * circle_padding) + padding_x
                 if (curr_x >= (width - 15)) {
                     i = 0
