@@ -1,8 +1,8 @@
 function circlePath(x, y, radius) {
-    var l = `${x - radius},${y}`,
-        r = `${x + radius},${y}`,
-        pre = `A${radius},${radius},0,1,1`;
-    return `M${l}${pre},${r}${pre},${l}Z`;
+    var l = x - radius + "," + y,
+        r = x + radius + "," + y,
+        pre = "A" + radius + "," + radius + ",0,1,1";
+    return "M" + l + pre + "," + r + pre + "," + l + "Z";
 }
 
 function filter_obj(obj_arr, key, value) {
@@ -31,7 +31,9 @@ function draw_const_map(config) {
         .attr("width", width)
         .attr("height", height);
 
-    var parties = d3.set(elec_results, function(d) {return d.party}).values();
+    var parties = d3.set(elec_results, function (d) {
+        return d.party
+    }).values();
 
     var feature = topojson.feature(map_obj, d3.values(map_obj.objects)[0]);
     var const_dims = {}
@@ -48,7 +50,10 @@ function draw_const_map(config) {
                     j += 1
                 }
                 curr_y = (j * circle_padding) + padding_y
-                const_dims[ac_name] = { x: curr_x, y: curr_y }
+                const_dims[ac_name] = {
+                    x: curr_x,
+                    y: curr_y
+                }
                 i++
             }
         })
@@ -107,15 +112,17 @@ function draw_const_map(config) {
     var inward = feature.features.map(function (d) {
         const_dim = const_dims[d.properties.AC_NAME]
         return flubber.combine(flubber.splitPathString(geoPath(d)),
-            circlePath(const_dim.x, const_dim.y, const_radius),
-            { single: true });
+            circlePath(const_dim.x, const_dim.y, const_radius), {
+                single: true
+            });
     });
 
     var outward = feature.features.map(function (d) {
         const_dim = const_dims[d.properties.AC_NAME]
         return flubber.separate(circlePath(const_dim.x, const_dim.y, const_radius),
-            flubber.splitPathString(geoPath(d)),
-            { single: true });
+            flubber.splitPathString(geoPath(d)), {
+                single: true
+            });
     });
 
 
